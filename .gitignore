@@ -30,8 +30,9 @@ TestResults/
 !**/*.tfvars.example
 !**/*.tfvars.json.example
 
-# Explicit sensitive local var file in this repo
-infra/terraform/main.tfvars.json
+# main.tfvars.json is intentionally committed — SQL password is a placeholder,
+# real value is injected at runtime via TF_SQL_ADMIN_PASSWORD GitHub secret.
+!infra/terraform/main.tfvars.json
 
 # OS/editor noise
 .DS_Store

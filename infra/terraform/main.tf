@@ -1,6 +1,17 @@
 terraform {
   required_version = ">= 1.4.0"
 
+  # Remote state stored in Azure Blob Storage.
+  # The storage account must be created before running terraform init.
+  # See docs/pipelines.md for the one-time setup commands.
+  backend "azurerm" {
+    resource_group_name  = "rg-globoticket-tfstate"
+    storage_account_name = "stglobotickettfstate"
+    container_name       = "tfstate"
+    key                  = "globoticket.tfstate"
+    use_azuread_auth     = true
+  }
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"

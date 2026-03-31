@@ -36,27 +36,46 @@ This project has three GitHub Actions workflows that replace the local PowerShel
 
 ### 1. Fill in your GitHub repo details
 
-Edit [infra/terraform/main.tfvars.json](../infra/terraform/main.tfvars.json) and set:
+[infra/terraform/main.tfvars.json](../infra/terraform/main.tfvars.json) is already committed with the correct `github_org` and `github_repo` values. Verify they are set correctly before proceeding.
 
-```json
-"github_org":  "your-github-username-or-org",
-"github_repo": "your-repo-name"
+### 2. Create the Terraform state storage account (one-time)
+
+Terraform state is stored in Azure Blob Storage so that both local runs and GitHub Actions can access it. This storage account must exist **before** you run `terraform init`.
+
+```bash
+az login
+
+az group create \
+  --name rg-globoticket-tfstate \
+  --location swedencentral
+
+az storage account create \
+  --name stglobotickettfstate \
+  --resource-group rg-globoticket-tfstate \
+  --sku Standard_LRS \
+  --allow-blob-public-access false
+
+az storage container create \
+  --name tfstate \
+  --account-name stglobotickettfstate \
+  --auth-mode login
 ```
 
-### 2. Run Terraform manually (bootstrap)
+> The storage account name (`stglobotickettfstate`) must be globally unique. Change it in both this command and the `backend` block in [infra/terraform/main.tf](../infra/terraform/main.tf) if needed.
+
+### 3. Run Terraform manually (bootstrap)
 
 The GitHub App Registration is created **by** Terraform, so the very first run must be done locally with your own Azure credentials.
 
 ```bash
-az login
 cd infra/terraform
 terraform init
 terraform apply -var-file="main.tfvars.json" -var="sql_admin_password=YourPassword123!"
 ```
 
-This creates all Azure infrastructure **and** the App Registration that GitHub Actions will use.
+This creates all Azure infrastructure **and** the App Registration that GitHub Actions will use. The Terraform state is saved to Azure Blob Storage — accessible to the pipelines.
 
-### 3. Copy the client ID to GitHub
+### 4. Copy the client ID to GitHub
 
 After apply completes, note the output:
 
@@ -106,8 +125,6 @@ No secret ever leaves GitHub or Azure. The token is valid only for the duration 
 **When to use:**
 - `apply` — first time setting up the project, or after infrastructure changes in `main.tf`
 - `destroy` — tear down all Azure resources to stop billing
-
-> **Note on Terraform state:** The state file (`terraform.tfstate`) is stored in the repo. This works for a demo or single-person project. For a team, migrate to an [Azure Blob Storage backend](https://developer.hashicorp.com/terraform/language/backend/azurerm) to share state safely.
 
 ---
 
@@ -204,5 +221,5 @@ Run: Terraform → destroy
 ## Security Notes
 
 - The Service Principal has **Owner** on the subscription because Terraform itself creates role assignments. For a production hardening step, you can split this into separate roles: `Contributor` for resource management + `User Access Administrator` scoped only to the resource group.
-- The `terraform.tfstate` file **contains sensitive values** (connection strings, etc.) in plaintext. Consider using the [azurerm backend](https://developer.hashicorp.com/terraform/language/backend/azurerm) with an encrypted Storage Account and restricted access for team projects.
+- Terraform state is stored in Azure Blob Storage (not the repo). The storage account should have its own RBAC-restricted access — only the GitHub Actions SP and approved users should have `Storage Blob Data Contributor`.
 - The SQL admin password is never stored in the repo — it is always passed at runtime from the `TF_SQL_ADMIN_PASSWORD` GitHub secret.
