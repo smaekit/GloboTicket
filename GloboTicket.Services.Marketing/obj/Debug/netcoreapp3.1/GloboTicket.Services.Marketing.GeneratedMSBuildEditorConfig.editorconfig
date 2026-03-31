@@ -1,0 +1,8 @@
+is_global = true
+build_property.RootNamespace = GloboTicket.Services.Marketing
+build_property.ProjectDir = C:\Projects\06 micro\demos\Gateway\GloboTicket.Services.Marketing\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.CsWinRTUseWindowsUIXamlProjections = false
+build_property.EffectiveAnalysisLevelStyle = 
+build_property.EnableCodeStyleSeverity = 

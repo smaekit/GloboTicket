@@ -1,0 +1,186 @@
+version: "3.8"
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "GloboTicket2024!"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+
+  eventcatalog:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Services.EventCatalog/GloboTicket.Services.EventCatalog.csproj
+    command: ["GloboTicket.Services.EventCatalog.dll"]
+    ports:
+      - "5501:80"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=GloboTicketEventCatalogDb;User Id=sa;Password=GloboTicket2024!;MultipleActiveResultSets=true
+    depends_on:
+      - sqlserver
+
+  shoppingbasket:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Services.ShoppingBasket/GloboTicket.Services.ShoppingBasket.csproj
+    command: ["GloboTicket.Services.ShoppingBasket.dll"]
+    ports:
+      - "5002:80"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=GloboTicketShoppingBasketDb;User Id=sa;Password=GloboTicket2024!;MultipleActiveResultSets=true
+      - ApiConfigs__EventCatalog__Uri=http://eventcatalog
+      - ApiConfigs__Discount__Uri=http://discount
+    depends_on:
+      - sqlserver
+      - eventcatalog
+      - discount
+
+  paymentgateway:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: External.PaymentGateway/External.PaymentGateway.csproj
+    command: ["External.PaymentGateway.dll"]
+    ports:
+      - "5004:80"
+
+  ordering:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Services.Order/GloboTicket.Services.Ordering.csproj
+    command: ["GloboTicket.Services.Ordering.dll"]
+    ports:
+      - "5005:80"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=GloboTicketOrderDb;User Id=sa;Password=GloboTicket2024!;MultipleActiveResultSets=true
+    depends_on:
+      - sqlserver
+
+  payment:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Services.Payment/GloboTicket.Services.Payment.csproj
+    command: ["GloboTicket.Services.Payment.dll"]
+    ports:
+      - "5006:80"
+    environment:
+      - ApiConfigs__ExternalPaymentGateway__Uri=http://paymentgateway
+    depends_on:
+      - paymentgateway
+
+  discount:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Services.Discount/GloboTicket.Services.Discount.csproj
+    command: ["GloboTicket.Services.Discount.dll"]
+    ports:
+      - "5007:80"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=GloboTicketDiscountDb;User Id=sa;Password=GloboTicket2024!;MultipleActiveResultSets=true
+    depends_on:
+      - sqlserver
+
+  marketing:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Services.Marketing/GloboTicket.Services.Marketing.csproj
+    command: ["GloboTicket.Services.Marketing.dll"]
+    ports:
+      - "5008:80"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=GloboTicketMarketingDb;User Id=sa;Password=GloboTicket2024!;MultipleActiveResultSets=true
+      - ApiConfigs__ShoppingBasket__Uri=http://shoppingbasket
+    depends_on:
+      - sqlserver
+      - shoppingbasket
+
+  gateway-webbff:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Gateway.WebBff/GloboTicket.Gateway.WebBff.csproj
+    command: ["GloboTicket.Gateway.WebBff.dll"]
+    ports:
+      - "5011:80"
+    environment:
+      - ServiceUrls__EventCatalog=http://eventcatalog
+      - ServiceUrls__ShoppingBasket=http://shoppingbasket
+      - ServiceUrls__Ordering=http://ordering
+      - ServiceUrls__Marketing=http://marketing
+      - ServiceUrls__Discount=http://discount
+    depends_on:
+      - eventcatalog
+      - shoppingbasket
+      - ordering
+      - discount
+
+  gateway-mobilebff:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Gateway.MobileBff/GloboTicket.Gateway.MobileBff.csproj
+    command: ["GloboTicket.Gateway.MobileBff.dll"]
+    ports:
+      - "5012:80"
+    environment:
+      - ServiceUrls__EventCatalog=http://eventcatalog
+      - ServiceUrls__ShoppingBasket=http://shoppingbasket
+      - ServiceUrls__Ordering=http://ordering
+      - ServiceUrls__Marketing=http://marketing
+      - ServiceUrls__Discount=http://discount
+    depends_on:
+      - eventcatalog
+      - shoppingbasket
+      - ordering
+      - discount
+
+  web-bff:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Web.Bff/GloboTicket.Web.Bff.csproj
+    command: ["GloboTicket.Web.Bff.dll"]
+    ports:
+      - "5010:80"
+    environment:
+      - GatewayUrl=http://gateway-webbff
+      - ApiConfigs__EventCatalog__Uri=http://eventcatalog
+      - ApiConfigs__ShoppingBasket__Uri=http://shoppingbasket
+      - ApiConfigs__Order__Uri=http://ordering
+      - ApiConfigs__Marketing__Uri=http://marketing
+      - ApiConfigs__Discount__Uri=http://discount
+    depends_on:
+      - gateway-webbff
+
+  webclient:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: GloboTicket.Client/GloboTicket.Web.csproj
+    command: ["GloboTicket.Web.dll"]
+    ports:
+      - "5000:80"
+    environment:
+      - ApiConfigs__EventCatalog__Uri=http://eventcatalog
+      - ApiConfigs__ShoppingBasket__Uri=http://shoppingbasket
+      - ApiConfigs__Order__Uri=http://ordering
+      - ApiConfigs__Marketing__Uri=http://marketing
+      - ApiConfigs__Discount__Uri=http://discount
+    depends_on:
+      - eventcatalog
+      - shoppingbasket
+      - ordering
+      - discount
+
+volumes:
+  sqldata:

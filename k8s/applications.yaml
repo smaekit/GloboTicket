@@ -1,0 +1,577 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventcatalog
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eventcatalog
+  template:
+    metadata:
+      labels:
+        app: eventcatalog
+    spec:
+      volumes:
+        - name: sb-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sb-kv
+      containers:
+        - name: eventcatalog
+          image: __ACR_LOGIN_SERVER__/eventcatalog:latest
+          args: ["GloboTicket.Services.EventCatalog.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sb-secrets
+                  key: EventCatalogConnectionString
+          volumeMounts:
+            - name: sb-secrets
+              mountPath: /mnt/secrets-store
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eventcatalog
+  namespace: globoticket
+spec:
+  selector:
+    app: eventcatalog
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discount
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: discount
+  template:
+    metadata:
+      labels:
+        app: discount
+    spec:
+      volumes:
+        - name: sb-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sb-kv
+      containers:
+        - name: discount
+          image: __ACR_LOGIN_SERVER__/discount:latest
+          args: ["GloboTicket.Services.Discount.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sb-secrets
+                  key: DiscountConnectionString
+          volumeMounts:
+            - name: sb-secrets
+              mountPath: /mnt/secrets-store
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: discount
+  namespace: globoticket
+spec:
+  selector:
+    app: discount
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymentgate
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paymentgate
+  template:
+    metadata:
+      labels:
+        app: paymentgate
+    spec:
+      containers:
+        - name: paymentgate
+          image: __ACR_LOGIN_SERVER__/paymentgateway:latest
+          args: ["External.PaymentGateway.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paymentgate
+  namespace: globoticket
+spec:
+  selector:
+    app: paymentgate
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shoppingbasket
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shoppingbasket
+  template:
+    metadata:
+      labels:
+        app: shoppingbasket
+    spec:
+      volumes:
+        - name: sb-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sb-kv
+      containers:
+        - name: shoppingbasket
+          image: __ACR_LOGIN_SERVER__/shoppingbasket:latest
+          args: ["GloboTicket.Services.ShoppingBasket.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sb-secrets
+                  key: ShoppingBasketConnectionString
+            - name: ApiConfigs__EventCatalog__Uri
+              value: http://eventcatalog
+            - name: ApiConfigs__Discount__Uri
+              value: http://discount
+            - name: CheckoutMessageTopic
+              value: checkoutmessage
+            - name: ServiceBusConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: sb-secrets
+                  key: ServiceBusConnectionString
+          volumeMounts:
+            - name: sb-secrets
+              mountPath: /mnt/secrets-store
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shoppingbasket
+  namespace: globoticket
+spec:
+  selector:
+    app: shoppingbasket
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordering
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordering
+  template:
+    metadata:
+      labels:
+        app: ordering
+    spec:
+      volumes:
+        - name: sb-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sb-kv
+      containers:
+        - name: ordering
+          image: __ACR_LOGIN_SERVER__/ordering:latest
+          args: ["GloboTicket.Services.Ordering.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sb-secrets
+                  key: OrderingConnectionString
+            - name: CheckoutMessageTopic
+              value: checkoutmessage
+            - name: OrderPaymentRequestMessageTopic
+              value: orderpaymentrequestmessage
+            - name: OrderPaymentUpdatedMessageTopic
+              value: orderpaymentupdatedmessage
+            - name: ServiceBusConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: sb-secrets
+                  key: ServiceBusConnectionString
+          volumeMounts:
+            - name: sb-secrets
+              mountPath: /mnt/secrets-store
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordering
+  namespace: globoticket
+spec:
+  selector:
+    app: ordering
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      volumes:
+        - name: sb-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sb-kv
+      containers:
+        - name: payment
+          image: __ACR_LOGIN_SERVER__/payment:latest
+          args: ["GloboTicket.Services.Payment.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ApiConfigs__ExternalPaymentGateway__Uri
+              value: http://paymentgate
+            - name: OrderPaymentRequestMessageTopic
+              value: orderpaymentrequestmessage
+            - name: OrderPaymentUpdatedMessageTopic
+              value: orderpaymentupdatedmessage
+            - name: subscriptionName
+              value: globoticketpayment
+            - name: ServiceBusConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: sb-secrets
+                  key: ServiceBusConnectionString
+          volumeMounts:
+            - name: sb-secrets
+              mountPath: /mnt/secrets-store
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment
+  namespace: globoticket
+spec:
+  selector:
+    app: payment
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marketing
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: marketing
+  template:
+    metadata:
+      labels:
+        app: marketing
+    spec:
+      volumes:
+        - name: sb-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sb-kv
+      containers:
+        - name: marketing
+          image: __ACR_LOGIN_SERVER__/marketing:latest
+          args: ["GloboTicket.Services.Marketing.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sb-secrets
+                  key: MarketingConnectionString
+            - name: ApiConfigs__ShoppingBasket__Uri
+              value: http://shoppingbasket
+          volumeMounts:
+            - name: sb-secrets
+              mountPath: /mnt/secrets-store
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: marketing
+  namespace: globoticket
+spec:
+  selector:
+    app: marketing
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gw-webbff
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gw-webbff
+  template:
+    metadata:
+      labels:
+        app: gw-webbff
+    spec:
+      containers:
+        - name: gw-webbff
+          image: __ACR_LOGIN_SERVER__/gateway-webbff:latest
+          args: ["GloboTicket.Gateway.WebBff.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ServiceUrls__EventCatalog
+              value: http://eventcatalog
+            - name: ServiceUrls__ShoppingBasket
+              value: http://shoppingbasket
+            - name: ServiceUrls__Ordering
+              value: http://ordering
+            - name: ServiceUrls__Marketing
+              value: http://marketing
+            - name: ServiceUrls__Discount
+              value: http://discount
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gw-webbff
+  namespace: globoticket
+spec:
+  selector:
+    app: gw-webbff
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gw-mobile
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gw-mobile
+  template:
+    metadata:
+      labels:
+        app: gw-mobile
+    spec:
+      containers:
+        - name: gw-mobile
+          image: __ACR_LOGIN_SERVER__/gateway-mobilebff:latest
+          args: ["GloboTicket.Gateway.MobileBff.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ServiceUrls__EventCatalog
+              value: http://eventcatalog
+            - name: ServiceUrls__ShoppingBasket
+              value: http://shoppingbasket
+            - name: ServiceUrls__Ordering
+              value: http://ordering
+            - name: ServiceUrls__Marketing
+              value: http://marketing
+            - name: ServiceUrls__Discount
+              value: http://discount
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gw-mobile
+  namespace: globoticket
+spec:
+  selector:
+    app: gw-mobile
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-bff
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-bff
+  template:
+    metadata:
+      labels:
+        app: web-bff
+    spec:
+      containers:
+        - name: web-bff
+          image: __ACR_LOGIN_SERVER__/web-bff:latest
+          args: ["GloboTicket.Web.Bff.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: GatewayUrl
+              value: http://gw-webbff
+            - name: ApiConfigs__EventCatalog__Uri
+              value: http://eventcatalog
+            - name: ApiConfigs__ShoppingBasket__Uri
+              value: http://shoppingbasket
+            - name: ApiConfigs__Order__Uri
+              value: http://ordering
+            - name: ApiConfigs__Marketing__Uri
+              value: http://marketing
+            - name: ApiConfigs__Discount__Uri
+              value: http://discount
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-bff
+  namespace: globoticket
+spec:
+  selector:
+    app: web-bff
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webclient
+  namespace: globoticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webclient
+  template:
+    metadata:
+      labels:
+        app: webclient
+    spec:
+      containers:
+        - name: webclient
+          image: __ACR_LOGIN_SERVER__/webclient:latest
+          args: ["GloboTicket.Web.dll"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ApiConfigs__EventCatalog__Uri
+              value: http://eventcatalog
+            - name: ApiConfigs__ShoppingBasket__Uri
+              value: http://shoppingbasket
+            - name: ApiConfigs__Order__Uri
+              value: http://ordering
+            - name: ApiConfigs__Marketing__Uri
+              value: http://marketing
+            - name: ApiConfigs__Discount__Uri
+              value: http://discount
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webclient
+  namespace: globoticket
+spec:
+  type: LoadBalancer
+  selector:
+    app: webclient
+  ports:
+    - port: 80
+      targetPort: 80

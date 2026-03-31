@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "dgSpecHash": "9Vx+H+kVSqA=",
+  "success": true,
+  "projectFilePath": "C:\\Projects\\06 micro\\demos\\Gateway\\External.PaymentGateway\\External.PaymentGateway.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.apidescription.server\\3.0.0\\microsoft.extensions.apidescription.server.3.0.0.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.configuration\\3.1.5\\microsoft.extensions.configuration.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\3.1.5\\microsoft.extensions.configuration.abstractions.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.configuration.binder\\3.1.5\\microsoft.extensions.configuration.binder.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\3.1.5\\microsoft.extensions.dependencyinjection.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\3.1.5\\microsoft.extensions.dependencyinjection.abstractions.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.logging\\3.1.5\\microsoft.extensions.logging.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\3.1.5\\microsoft.extensions.logging.abstractions.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.logging.debug\\3.1.5\\microsoft.extensions.logging.debug.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.options\\3.1.5\\microsoft.extensions.options.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.extensions.primitives\\3.1.5\\microsoft.extensions.primitives.3.1.5.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.openapi\\1.1.4\\microsoft.openapi.1.1.4.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\swashbuckle.aspnetcore\\5.5.1\\swashbuckle.aspnetcore.5.5.1.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\5.5.1\\swashbuckle.aspnetcore.swagger.5.5.1.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\5.5.1\\swashbuckle.aspnetcore.swaggergen.5.5.1.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\5.5.1\\swashbuckle.aspnetcore.swaggerui.5.5.1.nupkg.sha512",
+    "C:\\Users\\Marcu\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\3.1.32\\microsoft.netcore.app.host.win-x64.3.1.32.nupkg.sha512"
+  ],
+  "logs": []
+}

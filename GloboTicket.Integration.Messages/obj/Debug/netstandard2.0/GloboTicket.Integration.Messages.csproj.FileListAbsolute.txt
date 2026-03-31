@@ -1,0 +1,10 @@
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\bin\Debug\netstandard2.0\GloboTicket.Integration.Messages.deps.json
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\bin\Debug\netstandard2.0\GloboTicket.Integration.Messages.dll
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\bin\Debug\netstandard2.0\GloboTicket.Integration.Messages.pdb
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\obj\Debug\netstandard2.0\GloboTicket.Integration.Messages.csproj.AssemblyReference.cache
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\obj\Debug\netstandard2.0\GloboTicket.Integration.Messages.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\obj\Debug\netstandard2.0\GloboTicket.Integration.Messages.AssemblyInfoInputs.cache
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\obj\Debug\netstandard2.0\GloboTicket.Integration.Messages.AssemblyInfo.cs
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\obj\Debug\netstandard2.0\GloboTicket.Integration.Messages.csproj.CoreCompileInputs.cache
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\obj\Debug\netstandard2.0\GloboTicket.Integration.Messages.dll
+C:\Projects\06 micro\demos\Gateway\GloboTicket.Integration.Messages\obj\Debug\netstandard2.0\GloboTicket.Integration.Messages.pdb
