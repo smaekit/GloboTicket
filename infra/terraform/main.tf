@@ -10,14 +10,21 @@ terraform {
       source  = "aztfmod/azurecaf"
       version = "~> 1.2"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.0"
+    }
   }
 }
 
 provider "azurerm" {
   features {}
-  subscription_id    = var.subscription_id
+  subscription_id     = var.subscription_id
   storage_use_azuread = true
 }
+
+provider "azuread" {}
+
 
 variable "subscription_id" {
   type = string
@@ -62,6 +69,16 @@ variable "sql_admin_login" {
 variable "sql_admin_password" {
   type      = string
   sensitive = true
+}
+
+variable "github_org" {
+  type        = string
+  description = "GitHub organization or username that owns the repository"
+}
+
+variable "github_repo" {
+  type        = string
+  description = "GitHub repository name"
 }
 
 data "azurerm_client_config" "current" {}
@@ -369,4 +386,36 @@ resource "azurerm_role_assignment" "aks_key_vault_secrets_officer" {
   depends_on = [
     azurerm_kubernetes_cluster.aks
   ]
+}
+
+# ---------------------------------------------------------------------------
+# GitHub Actions OIDC Identity
+# ---------------------------------------------------------------------------
+# Creates an App Registration + Service Principal that GitHub Actions can
+# authenticate as using OIDC (no client secrets stored anywhere).
+# First run: execute manually with `az login`. After that, use the pipelines.
+
+resource "azuread_application" "github_oidc" {
+  display_name = "${var.project_name}-github-actions"
+}
+
+resource "azuread_service_principal" "github_oidc" {
+  client_id = azuread_application.github_oidc.client_id
+}
+
+resource "azuread_application_federated_identity_credential" "github_main" {
+  application_id = azuread_application.github_oidc.id
+  display_name   = "github-main"
+  description    = "GitHub Actions OIDC trust for the main branch"
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
+  audiences      = ["api://AzureADTokenExchange"]
+}
+
+# Owner is required because this Terraform config itself creates role assignments
+# (e.g. ACR Pull, Key Vault roles). For production, scope this down further.
+resource "azurerm_role_assignment" "github_owner" {
+  scope                = "/subscriptions/${var.subscription_id}"
+  role_definition_name = "Owner"
+  principal_id         = azuread_service_principal.github_oidc.object_id
 }

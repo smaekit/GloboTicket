@@ -1,0 +1,122 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "infra/**"
+      - "k8s/**"
+      - "docs/**"
+      - "*.md"
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to use (default: latest)"
+        required: false
+        default: "latest"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  prepare:
+    name: Get ACR Login Server
+    runs-on: ubuntu-latest
+    outputs:
+      acr_login_server: ${{ steps.tf_output.outputs.acr_login_server }}
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+
+    defaults:
+      run:
+        working-directory: infra/terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.4"
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Get ACR Login Server
+        id: tf_output
+        run: |
+          echo "acr_login_server=$(terraform output -raw acr_login_server)" >> "$GITHUB_OUTPUT"
+
+      - name: Set Image Tag
+        id: tag
+        run: |
+          TAG="${{ github.event.inputs.image_tag }}"
+          echo "image_tag=${TAG:-latest}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: eventcatalog
+            project: GloboTicket.Services.EventCatalog/GloboTicket.Services.EventCatalog.csproj
+          - name: shoppingbasket
+            project: GloboTicket.Services.ShoppingBasket/GloboTicket.Services.ShoppingBasket.csproj
+          - name: paymentgateway
+            project: External.PaymentGateway/External.PaymentGateway.csproj
+          - name: ordering
+            project: GloboTicket.Services.Order/GloboTicket.Services.Ordering.csproj
+          - name: payment
+            project: GloboTicket.Services.Payment/GloboTicket.Services.Payment.csproj
+          - name: discount
+            project: GloboTicket.Services.Discount/GloboTicket.Services.Discount.csproj
+          - name: marketing
+            project: GloboTicket.Services.Marketing/GloboTicket.Services.Marketing.csproj
+          - name: gateway-webbff
+            project: GloboTicket.Gateway.WebBff/GloboTicket.Gateway.WebBff.csproj
+          - name: gateway-mobilebff
+            project: GloboTicket.Gateway.MobileBff/GloboTicket.Gateway.MobileBff.csproj
+          - name: web-bff
+            project: GloboTicket.Web.Bff/GloboTicket.Web.Bff.csproj
+          - name: webclient
+            project: GloboTicket.Client/GloboTicket.Web.csproj
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR Login
+        run: az acr login --name $(echo "${{ needs.prepare.outputs.acr_login_server }}" | cut -d'.' -f1)
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push
+        run: |
+          IMAGE="${{ needs.prepare.outputs.acr_login_server }}/${{ matrix.name }}:${{ needs.prepare.outputs.image_tag }}"
+          docker build \
+            --build-arg PROJECT_PATH=${{ matrix.project }} \
+            --tag "$IMAGE" \
+            --push \
+            .

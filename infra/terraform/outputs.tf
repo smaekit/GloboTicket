@@ -37,3 +37,8 @@ output "sql_server_name" {
 output "sql_server_fqdn" {
   value = azurerm_mssql_server.sql.fully_qualified_domain_name
 }
+
+output "github_client_id" {
+  value       = azuread_application.github_oidc.client_id
+  description = "Set this as the AZURE_CLIENT_ID secret in your GitHub repository"
+}

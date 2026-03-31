@@ -1,0 +1,72 @@
+name: Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Apply or destroy infrastructure"
+        required: true
+        type: choice
+        options:
+          - apply
+          - destroy
+
+permissions:
+  id-token: write   # Required for OIDC token exchange
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform ${{ github.event.inputs.action }}
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: infra/terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.4"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply'
+        run: |
+          terraform apply -auto-approve \
+            -var-file="main.tfvars.json" \
+            -var="sql_admin_password=${{ secrets.TF_SQL_ADMIN_PASSWORD }}"
+
+      - name: Terraform Destroy
+        if: github.event.inputs.action == 'destroy'
+        run: |
+          terraform destroy -auto-approve \
+            -var-file="main.tfvars.json" \
+            -var="sql_admin_password=${{ secrets.TF_SQL_ADMIN_PASSWORD }}"
+
+      - name: Print Key Outputs
+        if: github.event.inputs.action == 'apply'
+        run: |
+          echo "=== Infrastructure Outputs ==="
+          echo "AKS Cluster:     $(terraform output -raw aks_cluster_name)"
+          echo "ACR Login Server: $(terraform output -raw acr_login_server)"
+          echo "Resource Group:  $(terraform output -raw resource_group_name)"
+          echo ""
+          echo "=== GitHub Secret to Set ==="
+          echo "AZURE_CLIENT_ID: $(terraform output -raw github_client_id)"
