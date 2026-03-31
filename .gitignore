@@ -1,0 +1,38 @@
+# .NET / Visual Studio
+.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+
+# Logs / local artifacts
+*.log
+*.tmp
+*.cache
+
+# Terraform
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/crash.log
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+**/.terraform.tfstate.lock.info
+
+# Terraform variable files (often contain secrets)
+**/*.tfvars
+**/*.tfvars.json
+!**/*.tfvars.example
+!**/*.tfvars.json.example
+
+# Explicit sensitive local var file in this repo
+infra/terraform/main.tfvars.json
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
