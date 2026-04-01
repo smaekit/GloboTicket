@@ -12,6 +12,12 @@ jobs:
     name: Deploy Kubernetes Manifests
     runs-on: ubuntu-latest
 
+    env:
+      ARM_USE_OIDC: true
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
     defaults:
       run:
         working-directory: infra/terraform
@@ -34,7 +40,12 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="use_oidc=true" \
+            -backend-config="client_id=$ARM_CLIENT_ID" \
+            -backend-config="tenant_id=$ARM_TENANT_ID" \
+            -backend-config="subscription_id=$ARM_SUBSCRIPTION_ID"
 
       - name: Read Terraform Outputs
         id: tf
