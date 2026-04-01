@@ -75,9 +75,22 @@ terraform apply -var-file="main.tfvars.json" -var="sql_admin_password=YourPasswo
 
 This creates all Azure infrastructure **and** the App Registration that GitHub Actions will use. The Terraform state is saved to Azure Blob Storage — accessible to the pipelines.
 
-### 4. Copy the client ID to GitHub
+### 4. Grant the Service Principal access to the state storage account
 
-After apply completes, note the output:
+The SP created by Terraform needs `Storage Blob Data Contributor` on the tfstate storage account so the GitHub Actions pipeline can read/write state.
+
+```bash
+az role assignment create \
+  --role "Storage Blob Data Contributor" \
+  --assignee <github_client_id> \
+  --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-globoticket-tfstate/providers/Microsoft.Storage/storageAccounts/stglobotickettfstate"
+```
+
+Replace `<github_client_id>` with the value printed by `terraform output -raw github_client_id`.
+
+### 5. Copy the client ID to GitHub
+
+After the role assignment, note the Terraform output:
 
 ```
 github_client_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

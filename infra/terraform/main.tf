@@ -208,12 +208,22 @@ resource "azurerm_key_vault" "kv" {
   rbac_authorization_enabled    = true
   public_network_access_enabled = true
   tags                          = local.tags
+
+  depends_on = [
+    azurerm_role_assignment.github_owner
+  ]
 }
 
 resource "azurerm_role_assignment" "current_user_key_vault_secrets_officer" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.current.object_id
+}
+
+resource "azurerm_role_assignment" "github_oidc_key_vault_secrets_officer" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = azuread_service_principal.github_oidc.object_id
 }
 
 resource "azurerm_key_vault_secret" "servicebus_connection_string" {
@@ -236,6 +246,10 @@ resource "azurerm_mssql_server" "sql" {
   minimum_tls_version           = "1.2"
   public_network_access_enabled = true
   tags                          = local.tags
+
+  depends_on = [
+    azurerm_role_assignment.github_owner
+  ]
 }
 
 resource "azurerm_mssql_firewall_rule" "allow_azure_services" {
@@ -366,6 +380,10 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   tags = local.tags
+
+  depends_on = [
+    azurerm_role_assignment.github_owner
+  ]
 }
 
 resource "azurerm_role_assignment" "aks_acr_pull" {
